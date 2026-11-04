@@ -1,0 +1,91 @@
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Laboratorio de Auditoría - DAST/SAST</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f4f6f9; color: #333; }
+            .header { background-color: #0056b3; color: white; padding: 20px; text-align: center; }
+            .container { max-width: 800px; margin: 30px auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .module { border: 1px solid #e1e4e8; padding: 20px; margin-bottom: 25px; border-radius: 6px; background-color: #fafbfc; }
+            .module h2 { margin-top: 0; color: #d73a49; font-size: 1.2rem; border-bottom: 2px solid #e1e4e8; padding-bottom: 10px; }
+            input, button { padding: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+            button { background-color: #28a745; color: white; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
+            button:hover { background-color: #218838; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Panel de Pruebas (App Vulnerable)</h1>
+            <p>Auditoría de Seguridad Web - Vectores de Ataque</p>
+        </div>
+
+        <div class="container">
+            <!-- 1. SQL INJECTION & CSRF -->
+            <div class="module">
+                <h2>1. Autenticación (SQLi / CSRF)</h2>
+                <p>Formulario de inicio de sesión sin parametrización.</p>
+                <form method="POST" action="/api/login">
+                    <input type="text" name="username" placeholder="Usuario (Intenta: admin' OR '1'='1)" required>
+                    <input type="password" name="password" placeholder="Contraseña (Intenta: cualquier cosa)" required>
+                    <button type="submit">Iniciar Sesión</button>
+                </form>
+            </div>
+
+            <!-- 2. CROSS-SITE SCRIPTING (XSS) -->
+            <div class="module">
+                <h2>2. Búsqueda de Productos (XSS Reflejado)</h2>
+                <p>El término buscado se renderiza sin codificación HTML.</p>
+                <form method="GET" action="/api/search">
+                    <input type="text" name="q" placeholder="Buscar... (Intenta inyectar un script aquí)" required>
+                    <button type="submit">Buscar</button>
+                </form>
+            </div>
+
+            <!-- 3. SERVER-SIDE REQUEST FORGERY (SSRF) -->
+            <div class="module">
+                <h2>3. Visor de Metadatos (SSRF)</h2>
+                <p>El servidor descarga el contenido de la URL indicada.</p>
+                <form method="POST" action="/api/fetch-image">
+                    <input type="text" name="url" placeholder="URL remota (ej. http://localhost:3000/api/invoices/1)" required>
+                    <button type="submit">Obtener Recurso</button>
+                </form>
+            </div>
+
+            <!-- 4. MASS ASSIGNMENT / JWT BYPASS -->
+            <div class="module">
+                <h2>4. Actualización de Perfil (Mass Assignment)</h2>
+                <p>Actualiza tu rol. (Requiere iniciar sesión antes para obtener la cookie).</p>
+                <form id="profileForm">
+                    <input type="text" id="role" placeholder="Nuevo rol (ej. usuario)">
+                    <button type="button" onclick="updateProfile()">Actualizar Perfil</button>
+                </form>
+            </div>
+
+            <!-- 5. IDOR -->
+            <div class="module">
+                <h2>5. Consulta de Facturas (IDOR)</h2>
+                <p>Accede a facturas por su identificador numérico.</p>
+                <input type="number" id="invoiceId" placeholder="ID de la factura (Ej. 1 o 2)">
+                <button type="button" onclick="getInvoice()">Ver Detalle de Factura</button>
+            </div>
+        </div>
+
+        <script>
+            async function updateProfile() {
+                const role = document.getElementById('role').value;
+                const res = await fetch('/api/users/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: role }) 
+                });
+                alert(await res.text());
+            }
+
+            function getInvoice() {
+                const id = document.getElementById('invoiceId').value;
+                window.location.href = '/api/invoices/' + id;
+            }
+        </script>
+    </body>
+    </html>
